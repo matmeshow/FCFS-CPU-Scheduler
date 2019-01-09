@@ -1,0 +1,163 @@
+from collections import deque
+
+
+#Function to find Response Time
+def ResponseTime(processes):
+    Tr=[[] for x in range(8)]
+    Tr[0]=0
+    for x in range(1,8):
+        i=processes[x]
+        tempvalue=i[0]
+        tempvalue += Tr[x-1]
+        processes[x].tr=tempvalue
+        
+#Function to find Average Wait Time
+def AverageWt():
+    totalWT = 0
+    for x in range (processes):
+        totalWT += processes[x].wt
+    return (totalWT / 8)
+
+#Function to find Average Turnaround Time
+def AverageTtr():
+    totalTtr = 0
+    for x in range (processes):
+        totalTtr += processes[x].ttr
+    return (totalTtr / 8) 
+
+#Function to find Average Response Time
+def AverageTr():
+    totalTr = 0
+    for x in range (processes):
+        totalTr += processes[x].tr
+    return (totalTr / 8)            
+   
+#The Class for each Process 
+class Process:
+    def __init__(self,pid,cpu,io,wt,ttr,tr):
+        #An id for each processes
+        self.pid = pid
+        #Cpu Bursts
+        self.cpu = cpu
+        #IO Bursts
+        self.io = io
+        #Waiting Time
+        self.wt= wt
+        #Turnaround Time
+        self.ttr = ttr
+        #Response Time
+        self.tr = tr
+
+#Harcoding each process into certain parts of the class
+P1 = Process('P1', [4, 5, 3, 5, 4, 6, 4, 5, 2], [24, 73, 31, 27, 33, 43, 64, 19],0)
+P2 = Process('P2', [18, 19, 11, 18, 19, 18, 17, 51, 19, 32, 10], [31, 35, 42, 43, 47, 43, 51, 32],0)
+P3 = Process('P3', [6, 4,  7,  4,  5,  7,  8,  6, 5], [18, 21, 19, 16, 29, 21, 22, 24],0) 
+P4 = Process('P4', [17, 19,  20,  17,  15,  12,  15,  14], [42, 55, 54, 52, 67, 72, 66],0)
+P5 = Process('P5', [5,  4,  5,  3, 5, 4,  3,  4,  3,  5], [81, 82, 71, 61, 62, 51, 77, 61, 42],0)
+P6 = Process('P6', [10,  12,  14,  11,  15,  13,  11], [35, 41, 33, 32, 41, 29],0)
+P7 = Process('P7', [21,  23,  24,  22,  21,  20],[51, 53, 61, 31, 43],0)
+P8 = Process('P8', [11,  14,  15,  17,  16,  12,  13, 15],[52, 42, 31, 21, 43, 31, 32],0)
+
+#Creating a singular list of all the processes
+processes = [P1,P2,P3,P4,P5,P6,P7,P8]
+
+#Total waitingtime
+waitingtime=0
+#Creating the Ready Queue
+ready_queue=deque()
+#Creating the IO Queue
+io_list=[]
+#system clock to act as counter for context switches for CPU Utilz
+
+#Filling the ready queue with all available processes
+for i in range (8):
+        
+    ready_queue.append(processes[i])
+
+#Runs the current burst BEFORE  going into main loop
+running = ready_queue[0]
+current_burst = running.cpu[0]
+    
+      
+#Main WHile loop that will run until both Ready and IO queues are empty
+while ((len(ready_queue) != 0) and (len(io_list != 0))):
+    
+    #Running and Current bursts of the first processes in the queue
+    running = ready_queue[0]
+    
+    current_burst = running.cpu[0]
+    
+    #Checks if processes is finished
+    if (len(ready_queue[0]) <= 1):
+        FinishedProcesses.append(ready_queue[0])
+        ready_queue[0].ttr = waitingtime
+    #Removes first process in the queue once its done
+    #TO move it to the IO later
+    ready_queue.popleft()
+    
+    #Print statements for Dynamic Execution
+    print("\n\nCurrent running time: ",waitingtime)
+    print("\nCurrent running Process is:",running.pid,"[CPU Burst] = ",running.cpu[0])
+    print("-"*50)
+    print("Processes in the Ready Queue:\n")
+    for x in range (len(ready_queue)):
+        print("Process ",ready_queue[x].pid," --  CPU Burst Time = ",ready_queue[x].cpu[0])
+    print("-"*50)
+    
+    #Removes the running CPU Bursts from the current processes
+    running.cpu.pop(0)
+    
+    #Calculates waiting time
+    waitingtime += current_burst
+        
+    #Adds/Updates waiting time for each process individually
+    for x in range(len(ready_queue)):
+        ready_queue[x].wt += waitingtime
+    
+    
+    print("Processes in IO:\n")
+    if(len(io_list)>0):
+        for x in range (len(io_list)):
+            print("Process ",io_list[x].pid," --  IO Burst Time = ",io_list[x].io[0])
+    
+    print("-"*50)
+    print("Finished Processes: \n")
+    print(FinishedProcesses.pid)
+    print("-"*50)
+    
+    
+    
+    #If statement that will run the part of the program for IO
+    if(len(io_list)>0):
+
+        x=0
+        #A while loop that run as long as 'x' is less than the size of the io list
+        while x < len(io_list):
+
+            #Subtracts the current burst from IO of processes in the list
+            io_list[x].io[0] = io_list[x].io[0] - current_burst
+            
+            #If the IO Burst hits zero or drops below, the processes is removed from the IO List
+            #It is then added back at the end of the ready queue
+            if (io_list[x].io[0] <= 0):
+                io_list[x].io.pop(0)
+                ready_queue.append(io_list[x])
+                del io_list[x]
+                x -= 1
+            x += 1
+        sysclock += 1       
+    #Adds currently running processes to the IO List            
+    io_list.append(running)        
+         
+cpu_util = (waitingtime / sysclock) * 100
+#Function calls for final data
+ResponseTime()
+
+AvWT = AverageWt()
+AvTTR = AverageTtr()
+AvTR = AverageTr()
+print("FCFS:\n\n")
+for x in range(7):
+    print(processes[x].pid,"[WT =",processes[x].wt,", TTR = ",processes[x].tt,", TR = ",processes[x].tr,"]\n")
+print("CPU Utilization: ",cpu_ut,"\nAverage WT: "
+      ,AvWT,"\nAverage TTR: ",AvTTR,"\nAverage Tr: ",AvTR)
